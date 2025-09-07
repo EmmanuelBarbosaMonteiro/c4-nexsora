@@ -54,6 +54,7 @@ Centraliza credenciais e controla acesso a ferramentas externas (ERPs, APIs de n
 ## 🛠️ Stack Tecnológica
 
 ### Backend
+- **GO**: Linguagem para regras de negócio
 - **Python**: Linguagem principal para agentes AI
 - **LangChain**: Framework para agentes AI e RAG
 - **CrewAI**: (Preparado para orquestração futura)
