@@ -40,7 +40,7 @@ Agent Detecção Anomalias → Agent Análise Preditiva → Agent Necessidades M
 #### ⚙️ Trigger Manager Configurável
 Permite ao usuário escolher entre duas estratégias:
 1. **Análise Agendada**: Intervalos fixos ou horários específicos
-2. **Baseada em Indicadores**: Thresholds personalizados e combinações lógicas
+2. **Baseada em Indicadores**: Limites personalizados e combinações lógicas
 
 #### 🔐 Docker MCP Gateway
 Centraliza credenciais e controla acesso a ferramentas externas (ERPs, APIs de notificação) via Model Context Protocol.
