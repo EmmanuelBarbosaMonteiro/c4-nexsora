@@ -7,10 +7,10 @@ A **Plataforma SaaS Nexora** é uma solução especializada em **Manutenção Pr
 ## 🚀 Objetivos
 
 ### Objetivo Principal
-Transformar dados de sensores IoT em insights acionáveis de manutenção através de um pipeline inteligente de agentes AI, reduzindo paradas não planejadas em até 80% e custos de manutenção em até 30%.
+Transformar dados de sensores IoT em insights acionáveis de manutenção através de um pipeline inteligente de agentes AI, reduzindo paradas não planejadas e custos de manutenção.
 
 ### Objetivos Específicos
-- **Detecção Proativa**: Identificar anomalias em tempo real usando modelos de Machine Learning próprios
+- **Detecção Proativa**: Identificar anomalias em tempo real usando modelos de LLM
 - **Predição Inteligente**: Prever falhas futuras com alta precisão usando análise de séries temporais
 - **Planejamento Otimizado**: Gerar planos de manutenção contextualizados usando RAG (Retrieval-Augmented Generation)
 - **Integração Seamless**: Conectar com ERPs e sistemas corporativos existentes sem vendor lock-in
