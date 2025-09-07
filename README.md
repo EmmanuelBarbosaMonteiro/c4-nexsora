@@ -103,32 +103,23 @@ Centraliza credenciais e controla acesso a ferramentas externas (ERPs, APIs de n
 
 ## 🔧 Casos de Uso
 
-### Indústria Manufactureira
-- Monitoramento de motores e compressores
-- Predição de falhas em linhas de produção
+### Indústria
+- Monitoramento de ativos diversos
+- Predição de falhas em produção
 - Otimização de paradas programadas
-
-### Facilities Management
-- Gestão de HVAC em prédios comerciais
-- Monitoramento de elevadores
-- Manutenção preditiva de geradores
-
-### Oil & Gas
-- Monitoramento de bombas e válvulas
 - Predição de falhas em equipamentos críticos
-- Integração com sistemas SCADA
+- Integração com sistemas ERPs diversos
 
 ## 📈 Benefícios
 
 ### Para o Negócio
-- **Redução de 80%** em paradas não planejadas
-- **Economia de 30%** em custos de manutenção
-- **ROI positivo** em 6-12 meses
+- **Redução** em paradas não planejadas
+- **Economia** em custos de manutenção
 - **Compliance** automatizada com normas de segurança
 
 ### Para Operações
 - **Visibilidade total** do estado dos equipamentos
-- **Alertas proativos** multi-canal (WhatsApp, email, SMS)
+- **Alertas proativos** multi-canal (WhatsApp, E-mail, SMS, Discord, Slack, SAP)
 - **Planejamento otimizado** de recursos e estoque
 - **Integração seamless** com sistemas existentes
 
@@ -164,14 +155,6 @@ Centraliza credenciais e controla acesso a ferramentas externas (ERPs, APIs de n
 - [Diagramas C4](./diagramas/novo/)
 - [API Documentation](./docs/api/)
 - [Deployment Guide](./docs/deployment/)
-
-## 🤝 Contribuição
-
-Para contribuir com o projeto, consulte o [Contribution Guide](./CONTRIBUTING.md).
-
-## 📄 Licença
-
-Este projeto está licenciado sob [MIT License](./LICENSE).
 
 ---
 
