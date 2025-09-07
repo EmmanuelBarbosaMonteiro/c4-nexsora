@@ -1,0 +1,143 @@
+@startuml Sequence-Fluxo-Prescritivo-Pipeline
+!theme cerulean-outline
+title Fluxo de Manutenção Prescritiva - Pipeline Sequencial com Fila de Eventos
+
+actor "Sensor IoT" as sensor
+participant "Entrada no Sistema\n(Data Receiver)" as receiver
+participant "Observador\n(Observer Pattern)" as observer
+participant "Event Router" as router
+participant "Fila de Eventos\n(RabbitMQ)" as queue
+participant "Agent Detecção\nAnomalias" as anomaly
+participant "Agent Análise\nPreditiva" as predictive
+participant "Agent Necessidades\nManutenção" as maintenance
+participant "RAG Service\n(LangChain)" as rag
+participant "Pinecone\nVector DB" as pinecone
+participant "Agent Emissão\nOS" as workorder
+participant "Tools Internas" as internal_tools
+participant "Docker MCP\nGateway" as mcp
+participant "ERP System" as erp
+participant "Serviços de\nNotificação" as notification
+participant "PostgreSQL" as postgres
+participant "Usuário" as user
+
+== 1. Coleta e Processamento de Dados ==
+sensor -> receiver: Envia telemetria\n(temperatura, vibração, etc.)
+note right: Dados em tempo real\nvia MQTT/HTTP
+
+receiver -> observer: Dados processados e normalizados
+note right: Observer Pattern:\nObserva mudanças nos dados
+
+observer -> router: Evento: data_changed
+note right: Observer detecta\npadrão ou mudança significativa
+
+router -> queue: Publica evento: sensor_data_available
+note right: RabbitMQ routing:\nsensor.data.new
+
+== 2. Pipeline Sequencial - Etapa 1: Detecção de Anomalias ==
+queue -> anomaly: Consume evento: sensor_data_available
+note right: Consumer dedicado\npara dados de sensores
+
+anomaly -> postgres: Consulta dados históricos
+postgres -> anomaly: Histórico de padrões normais
+
+anomaly -> anomaly: Análise ML (Isolation Forest, One-Class SVM)
+note right: Modelos próprios:\n- Detecção estatística\n- Machine Learning\n- Análise de padrões
+
+alt Anomalia Detectada
+    anomaly -> queue: Publica evento: anomaly_detected
+    note right: Event payload:\n- Tipo de anomalia\n- Severidade\n- Timestamp\n- Dados do sensor
+    
+    == 3. Pipeline Sequencial - Etapa 2: Análise Preditiva ==
+    queue -> predictive: Consume evento: anomaly_detected
+    note right: Consumer específico\npara eventos de anomalia
+    
+    predictive -> postgres: Consulta modelos treinados
+    postgres -> predictive: Modelos LSTM/Prophet
+    
+    predictive -> predictive: Análise preditiva (Time Series)
+    note right: Modelos de predição:\n- LSTM para séries temporais\n- Prophet para sazonalidade\n- Probabilidade de falha
+    
+    predictive -> queue: Publica evento: failure_predicted
+    note right: Event payload:\n- Probabilidade de falha\n- Tempo estimado até falha\n- Componentes afetados
+    
+    == 4. Pipeline Sequencial - Etapa 3: Planejamento de Manutenção ==
+    queue -> maintenance: Consume evento: failure_predicted
+    note right: Consumer para\neventos de predição
+    
+    maintenance -> rag: Consulta base de conhecimento
+    note right: RAG Query:\n"Procedimento manutenção\nequipamento X com falha Y"
+    
+    rag -> pinecone: Busca vetorial por similaridade
+    pinecone -> rag: Documentos relevantes
+    note right: Embeddings de:\n- Manuais técnicos\n- Histórico de falhas\n- Procedimentos
+    
+    rag -> maintenance: Recomendações contextualizadas
+    note right: LLM Local (Ollama):\nContexto + Geração
+    
+    maintenance -> postgres: Consulta dados do equipamento
+    postgres -> maintenance: Especificações e histórico
+    
+    maintenance -> queue: Publica evento: maintenance_needed
+    note right: Event payload:\n- Plano de manutenção\n- Prioridade\n- Recursos necessários\n- Procedimentos
+    
+    == 5. Pipeline Sequencial - Etapa 4: Geração de Ordem de Serviço ==
+    queue -> workorder: Consume evento: maintenance_needed
+    note right: Consumer final\ndo pipeline
+    
+    workorder -> internal_tools: Verifica agenda da oficina
+    internal_tools -> postgres: Consulta disponibilidade
+    postgres -> internal_tools: Slots disponíveis
+    internal_tools -> workorder: Agenda: amanhã 14h
+    
+    workorder -> internal_tools: Verifica estoque interno
+    internal_tools -> postgres: Consulta peças em estoque
+    postgres -> internal_tools: Status do estoque
+    internal_tools -> workorder: Peças disponíveis
+    
+    == 6. Integração com Sistemas Externos via MCP ==
+    workorder -> mcp: Solicita verificação ERP
+    note right: MCP Protocol:\nRequest external tool
+    
+    mcp -> erp: Consulta estoque ERP (credenciais seguras)
+    erp -> mcp: Status do estoque ERP
+    mcp -> workorder: Confirmação via MCP
+    note right: Auditoria completa\ndo acesso ao ERP
+    
+    workorder -> internal_tools: Cria ordem de serviço
+    internal_tools -> postgres: Persiste OS
+    postgres -> internal_tools: OS #1234 criada
+    
+    workorder -> mcp: Solicita envio de notificações
+    note right: MCP Protocol:\nNotification tool request
+    
+    == 7. Notificações Multi-Canal via MCP ==
+    mcp -> notification: Envia notificações (credenciais seguras)
+    notification -> user: WhatsApp: "OS #1234 criada - Prioridade ALTA"
+    notification -> user: Email: Detalhes completos da OS
+    
+    workorder -> queue: Publica evento: workorder_created
+    note right: Event final:\nWorkOrder criada e notificada
+    
+    == 8. Feedback e Aprendizado Contínuo ==
+    user -> postgres: Confirma execução da manutenção
+    postgres -> queue: Publica evento: maintenance_completed
+    queue -> rag: Atualiza base de conhecimento
+    note right: Continuous Learning:\n- Eficácia da predição\n- Resultado da manutenção\n- Feedback do técnico
+    
+else Nenhuma Anomalia
+    anomaly -> queue: Publica evento: data_normal
+    note right: Continue monitoramento\nregular
+end
+
+note over sensor, user
+Pipeline Sequencial com Fila de Eventos Central:
+1. Entrada → Observador → Fila (Hub Central)
+2. Fila coordena agentes em sequência específica
+3. Cada agente consome evento específico
+4. Cada agente publica resultado para próxima etapa
+5. MCP Gateway apenas para sistemas externos
+6. Tools internas acessam PostgreSQL diretamente
+7. Arquitetura preparada para evolução futura
+end note
+
+@enduml

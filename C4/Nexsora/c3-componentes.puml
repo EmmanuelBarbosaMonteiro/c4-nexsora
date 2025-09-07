@@ -1,0 +1,223 @@
+@startuml C3-Componentes-Nexora
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Diagrama de Componentes - Gestão Completa de Dados Mestre + Pipeline AI
+
+Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
+    Component(equipment_crud, "Equipment CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia hierarquia de equipamentos e especificações")
+    Component(equipment_validator, "Equipment Validator", "Python", "Valida dados e regras de negócio de equipamentos")
+    Component(hierarchy_manager, "Hierarchy Manager", "Python", "Gerencia árvore hierárquica (Planta → Linha → Equipamento)")
+    
+    Component(sensor_crud, "Sensor CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia tipos de sensores e especificações")
+    Component(sensor_registry, "Sensor Registry", "Python", "Registro global de sensores para reutilização")
+    Component(sensor_validator, "Sensor Validator", "Python", "Valida limites operacionais e configurações")
+    
+    Component(manual_crud, "Manual CRUD", "Python + FastAPI", "Gerencia uploads e metadados de manuais")
+    Component(fmea_manager, "FMEA Manager", "Python", "Gerencia análises FMEA (Failure Mode Effect Analysis)")
+    Component(document_uploader, "Document Uploader", "Python + FastAPI", "Upload seguro de PDFs e documentos")
+    
+    Component(maintenance_crud, "Maintenance History CRUD", "Python + FastAPI", "Registra histórico completo de manutenções")
+    Component(failure_analyzer, "Failure Pattern Analyzer", "Python + pandas", "Analisa padrões de falha e correlações")
+    Component(roi_calculator, "ROI Calculator", "Python", "Calcula ROI de manutenções e predições")
+}
+
+Container_Boundary(document_processing_boundary, "Processamento Inteligente de Documentos") {
+    Component(pdf_processor, "PDF Processor", "Python + PyPDF2 + OCR", "Extrai texto de PDFs e imagens")
+    Component(text_extractor, "Text Extractor", "Python + spaCy", "Extrai procedimentos e informações estruturadas")
+    Component(entity_recognizer, "Entity Recognizer", "Python + NER", "Identifica peças, ferramentas e procedimentos")
+    Component(document_classifier, "Document Classifier", "Python + scikit-learn", "Classifica tipos de documento automaticamente")
+    Component(embedding_generator, "Embedding Generator", "Python + SentenceTransformers", "Gera embeddings contextuais")
+    Component(knowledge_indexer, "Knowledge Indexer", "Python + LangChain", "Indexa conhecimento para RAG")
+}
+
+Container_Boundary(ingestion_boundary, "Entrada e Coordenação") {
+    Component(data_receiver, "Data Receiver", "Python + FastAPI", "Recebe dados de sensores via MQTT/HTTP")
+    Component(sensor_validator_runtime, "Runtime Sensor Validator", "Python", "Valida sensores em tempo real contra registry")
+    Component(data_processor, "Data Processor", "Python", "Processa, normaliza e valida dados de telemetria")
+    Component(timeseries_writer, "TimeSeries Writer", "Python + InfluxDB Client", "Persiste dados tratados no banco time series")
+    Component(observer, "Observador", "Python + Observer Pattern", "Observa mudanças nos dados e emite eventos")
+    Component(event_router, "Event Router", "Python + Pika", "Roteia eventos para filas específicas")
+}
+
+Container_Boundary(trigger_boundary, "Trigger Manager - Configurável pelo Usuário") {
+    Component(trigger_configurator, "Trigger Configurator", "Python + FastAPI", "Interface para configurar triggers de análise preditiva")
+    Component(scheduled_trigger, "Scheduled Trigger", "Python + Celery Beat", "Executa análises em horários/intervalos definidos pelo usuário")
+    Component(threshold_monitor, "Threshold Monitor", "Python", "Monitora indicadores e valores limite configurados")
+    Component(trigger_evaluator, "Trigger Evaluator", "Python", "Avalia condições e decide quando disparar análise preditiva")
+}
+
+Container_Boundary(queue_boundary, "Fila de Eventos - Hub Central") {
+    Component(sensor_queue, "Sensor Data Queue", "RabbitMQ", "Fila para dados de sensores")
+    Component(anomaly_queue, "Anomaly Events Queue", "RabbitMQ", "Fila para eventos de anomalias")
+    Component(prediction_queue, "Prediction Events Queue", "RabbitMQ", "Fila para eventos de predição")
+    Component(maintenance_queue, "Maintenance Events Queue", "RabbitMQ", "Fila para eventos de manutenção")
+    Component(workorder_queue, "WorkOrder Events Queue", "RabbitMQ", "Fila para eventos de ordens de serviço")
+    Component(trigger_queue, "Trigger Events Queue", "RabbitMQ", "Fila para eventos de trigger configurável")
+}
+
+Container_Boundary(agents_boundary, "Pipeline de Agentes AI Contextualizados") {
+    Component(anomaly_detector, "Anomaly Detection Agent", "Python + LangChain + scikit-learn", "Detecta anomalias usando contexto de equipamentos")
+    Component(predictive_analyzer, "Predictive Analysis Agent", "Python + LangChain + TensorFlow", "Prediz falhas usando histórico de manutenções")
+    Component(maintenance_planner, "Maintenance Planning Agent", "Python + LangChain", "Planeja manutenções usando FMEA e manuais")
+    Component(workorder_generator, "Work Order Agent", "Python + LangChain", "Gera OS usando contexto completo do equipamento")
+}
+
+Container_Boundary(rag_boundary, "RAG Service Contextualizado") {
+    Component(contextual_retriever, "Contextual Retriever", "Python + LangChain", "Busca conhecimento específico por equipamento")
+    Component(manual_searcher, "Manual Searcher", "Python + LangChain", "Busca procedimentos específicos em manuais")
+    Component(fmea_searcher, "FMEA Searcher", "Python + LangChain", "Busca análises FMEA relacionadas")
+    Component(history_searcher, "History Searcher", "Python + LangChain", "Busca casos similares no histórico")
+    Component(context_generator, "Context Generator", "Python + LangChain + Ollama", "Gera recomendações contextualizadas")
+}
+
+ContainerDb(postgres, "PostgreSQL", "PostgreSQL 15", "Dados mestre e operacionais")
+ContainerDb(influxdb, "InfluxDB/TimescaleDB", "Time Series Database", "Histórico de sensores")
+ContainerDb(pinecone, "Pinecone Vector DB", "Pinecone Cloud", "Embeddings contextuais")
+ContainerDb(minio, "MinIO/S3", "Object Storage", "PDFs e documentos técnicos")
+
+Person(gestor_ativos, "Gestor de Ativos", "Cadastra dados mestre")
+System_Ext(sensors, "Sensores IoT", "Dispositivos de campo")
+
+' === FLUXOS DE GESTÃO DE DADOS MESTRE ===
+' Equipment Management
+Rel(gestor_ativos, equipment_crud, "Cadastra equipamentos", "REST API")
+Rel(equipment_crud, equipment_validator, "Valida dados", "Internal")
+Rel(equipment_validator, hierarchy_manager, "Valida hierarquia", "Internal")
+Rel(equipment_crud, postgres, "Persiste equipamentos", "SQL")
+
+' Sensor Management
+Rel(gestor_ativos, sensor_crud, "Cadastra sensores", "REST API")
+Rel(sensor_crud, sensor_validator, "Valida especificações", "Internal")
+Rel(sensor_validator, sensor_registry, "Registra globalmente", "Internal")
+Rel(sensor_crud, postgres, "Persiste sensores", "SQL")
+
+' Manual & FMEA Management
+Rel(gestor_ativos, manual_crud, "Upload manuais", "REST API")
+Rel(manual_crud, document_uploader, "Upload seguro", "Internal")
+Rel(document_uploader, minio, "Armazena PDFs", "S3 API")
+Rel(manual_crud, fmea_manager, "Vincula FMEA", "Internal")
+Rel(fmea_manager, postgres, "Persiste FMEA", "SQL")
+
+' Document Processing Pipeline
+Rel(document_uploader, pdf_processor, "Process new PDF", "Internal")
+Rel(pdf_processor, text_extractor, "Extracted text", "Internal")
+Rel(text_extractor, entity_recognizer, "Structured text", "Internal")
+Rel(entity_recognizer, document_classifier, "Entities found", "Internal")
+Rel(document_classifier, embedding_generator, "Classified content", "Internal")
+Rel(embedding_generator, knowledge_indexer, "Generate embeddings", "Internal")
+Rel(knowledge_indexer, pinecone, "Store embeddings", "Pinecone API")
+
+' Maintenance History Management
+Rel(gestor_ativos, maintenance_crud, "Registra manutenções", "REST API")
+Rel(maintenance_crud, failure_analyzer, "Analisa padrões", "Internal")
+Rel(failure_analyzer, roi_calculator, "Calcula ROI", "Internal")
+Rel(maintenance_crud, postgres, "Persiste histórico", "SQL")
+
+' === FLUXO OPERACIONAL COM CONTEXTO ===
+' Data Ingestion with Context
+Rel(sensors, data_receiver, "Telemetria", "MQTT/HTTP")
+Rel(data_receiver, sensor_validator_runtime, "Valida sensor", "Internal")
+Rel(sensor_validator_runtime, sensor_registry, "Consulta registry", "Internal")
+Rel(data_receiver, data_processor, "Data + context", "Internal")
+Rel(data_processor, timeseries_writer, "Processed data", "Internal")
+Rel(timeseries_writer, influxdb, "Store time series", "InfluxDB")
+
+' Pipeline com Contexto Completo
+Rel(sensor_queue, anomaly_detector, "Sensor data", "AMQP")
+Rel(anomaly_detector, equipment_crud, "Equipment context", "REST API")
+Rel(anomaly_detector, sensor_registry, "Sensor specs", "REST API")
+Rel(anomaly_detector, maintenance_crud, "Historical context", "REST API")
+
+Rel(trigger_queue, predictive_analyzer, "Trigger event", "AMQP")
+Rel(predictive_analyzer, maintenance_crud, "Historical failures", "REST API")
+Rel(predictive_analyzer, equipment_crud, "Equipment specs", "REST API")
+Rel(predictive_analyzer, failure_analyzer, "Failure patterns", "REST API")
+
+Rel(prediction_queue, maintenance_planner, "Prediction event", "AMQP")
+Rel(maintenance_planner, contextual_retriever, "Query knowledge", "HTTP")
+Rel(contextual_retriever, manual_searcher, "Search manuals", "Internal")
+Rel(contextual_retriever, fmea_searcher, "Search FMEA", "Internal")
+Rel(contextual_retriever, history_searcher, "Search similar cases", "Internal")
+Rel(manual_searcher, pinecone, "Vector search manuals", "Pinecone API")
+Rel(fmea_searcher, pinecone, "Vector search FMEA", "Pinecone API")
+Rel(history_searcher, postgres, "Search history", "SQL")
+
+Rel(maintenance_queue, workorder_generator, "Maintenance event", "AMQP")
+Rel(workorder_generator, equipment_crud, "Equipment hierarchy", "REST API")
+Rel(workorder_generator, maintenance_crud, "Log new maintenance", "REST API")
+Rel(workorder_generator, roi_calculator, "Calculate expected ROI", "REST API")
+
+note right of equipment_crud
+Equipment Management:
+
+🏭 HIERARQUIA COMPLEXA:
+- Plantas → Linhas → Equipamentos → Componentes
+- Relacionamentos parent/child
+- Herança de configurações
+- Criticidade por nível
+- Planos de manutenção cascata
+
+📊 ESPECIFICAÇÕES TÉCNICAS:
+- Fabricante, modelo, série
+- Parâmetros operacionais
+- Limites de alarme
+- Vida útil esperada
+- Peças de reposição
+end note
+
+note right of sensor_registry
+Sensor Registry:
+
+🔍 REUTILIZAÇÃO INTELIGENTE:
+- Catálogo global de tipos de sensor
+- Especificações técnicas padronizadas
+- Configurações testadas e aprovadas
+- Limites operacionais por aplicação
+- Histórico de performance
+
+📡 VALIDAÇÃO AUTOMÁTICA:
+- Verificação de compatibilidade
+- Validação de ranges operacionais
+- Detecção de configurações inválidas
+- Sugestões de melhorias
+- Alertas de descontinuação
+end note
+
+note right of fmea_manager
+FMEA Integration:
+
+⚠️ ANÁLISE SISTEMÁTICA:
+- Modos de falha por componente
+- Efeitos e severidade
+- Probabilidade de ocorrência
+- Métodos de detecção
+- Ações recomendadas
+
+🔗 LINKING INTELIGENTE:
+- Vinculação com equipamentos
+- Correlação com histórico
+- Priorização automática
+- Updates baseados em dados reais
+- Feedback loop contínuo
+end note
+
+note right of contextual_retriever
+RAG Contextualizado:
+
+🧠 BUSCA INTELIGENTE:
+- Contexto por equipamento específico
+- Filtragem por tipo de falha
+- Peso por relevância histórica
+- Multi-fonte (manuais + FMEA + histórico)
+- Recomendações personalizadas
+
+📚 KNOWLEDGE FUSION:
+- Combina múltiplas fontes
+- Resolve conflitos automaticamente
+- Atualiza conhecimento continuamente
+- Aprende com feedback
+- Multilingual support
+end note
+
+SHOW_LEGEND()
+@enduml

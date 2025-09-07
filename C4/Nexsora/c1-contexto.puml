@@ -1,0 +1,28 @@
+@startuml C1-Contexto-Nexora
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Sistema de Contexto - Plataforma SaaS Nexora
+
+Person(usuario, "Usuário", "Técnicos de manutenção, gestores de ativos e operadores")
+System(nexora, "Plataforma SaaS Nexora", "Plataforma especializada em Manutenção Prescritiva com foco em predição de falhas e gestão inteligente de manutenções")
+
+System_Ext(sensores, "Sensores IoT", "Dispositivos de monitoramento em tempo real de equipamentos industriais")
+System_Ext(erp, "Sistemas ERP", "SAP, Oracle, outros ERPs corporativos para gestão de recursos")
+System_Ext(fornecedores, "Fornecedores de Sensores", "Provedores de hardware e software de sensoriamento IoT")
+System_Ext(notificacoes, "Serviços de Notificação", "WhatsApp, E-mail, SMS, Discord, Slack, SAP")
+
+Rel(usuario, nexora, "Monitora equipamentos, visualiza dashboards e recebe alertas", "HTTPS/Web")
+Rel(sensores, nexora, "Envia dados de telemetria em tempo real", "MQTT/HTTP")
+Rel(nexora, erp, "Integra com sistemas corporativos", "REST API/SOAP")
+Rel(nexora, notificacoes, "Envia alertas e notificações", "REST API/Webhooks")
+Rel(fornecedores, nexora, "Fornece dados de configuração e atualizações", "REST API")
+
+note as n1
+A plataforma evita vendor lock-in através de:
+- APIs padronizadas para integração
+- Suporte a múltiplos protocolos IoT
+- Arquitetura baseada em microserviços
+end note
+
+SHOW_LEGEND()
+@enduml
