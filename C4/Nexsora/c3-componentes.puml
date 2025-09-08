@@ -1,7 +1,7 @@
 @startuml C3-Componentes-Nexora
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-title Diagrama de Componentes - Pipeline de Vetorização Completo (Equipamentos + Sensores)
+title Diagrama de Componentes - Gestão Completa de Dados Mestre + Pipeline AI
 
 Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
     Component(equipment_crud, "Equipment CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia hierarquia de equipamentos e especificações")
@@ -11,9 +11,8 @@ Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
     Component(sensor_crud, "Sensor CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia tipos de sensores e especificações")
     Component(sensor_registry, "Sensor Registry", "Python", "Registro global de sensores para reutilização")
     Component(sensor_validator, "Sensor Validator", "Python", "Valida limites operacionais e configurações")
-    Component(sensor_documentation, "Sensor Documentation Manager", "Python + FastAPI", "Gerencia manuais e documentação técnica de sensores")
     
-    Component(manual_crud, "Manual CRUD", "Python + FastAPI", "Gerencia uploads e metadados de manuais de equipamentos")
+    Component(manual_crud, "Manual CRUD", "Python + FastAPI", "Gerencia uploads e metadados de manuais")
     Component(fmea_manager, "FMEA Manager", "Python", "Gerencia análises FMEA (Failure Mode Effect Analysis)")
     Component(document_uploader, "Document Uploader", "Python + FastAPI", "Upload seguro de PDFs e documentos")
     
@@ -22,27 +21,13 @@ Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
     Component(roi_calculator, "ROI Calculator", "Python", "Calcula ROI de manutenções e predições")
 }
 
-Container_Boundary(vectorization_boundary, "Pipeline de Vetorização Unificado") {
-    Component(document_processor, "Document Processor", "Python + LangChain", "Coordena processamento de documentos para vetorização")
-    Component(sensor_data_processor, "Sensor Data Processor", "Python + LangChain", "Processa dados técnicos de sensores para RAG")
+Container_Boundary(document_processing_boundary, "Processamento Inteligente de Documentos") {
     Component(pdf_processor, "PDF Processor", "Python + PyPDF2 + OCR", "Extrai texto de PDFs e imagens")
     Component(text_extractor, "Text Extractor", "Python + spaCy", "Extrai procedimentos e informações estruturadas")
-    Component(entity_recognizer, "Entity Recognizer", "Python + NER", "Identifica peças, ferramentas, parâmetros e procedimentos")
+    Component(entity_recognizer, "Entity Recognizer", "Python + NER", "Identifica peças, ferramentas e procedimentos")
     Component(document_classifier, "Document Classifier", "Python + scikit-learn", "Classifica tipos de documento automaticamente")
     Component(embedding_generator, "Embedding Generator", "Python + SentenceTransformers", "Gera embeddings contextuais")
-    Component(vector_indexer, "Vector Indexer", "Python + Pinecone SDK", "Gerencia indexação e metadados no Pinecone")
-    Component(chunk_processor, "Chunk Processor", "Python + LangChain", "Divide documentos em chunks otimizados")
-    Component(technical_spec_processor, "Technical Spec Processor", "Python", "Processa especificações técnicas estruturadas")
-}
-
-Container_Boundary(rag_service_boundary, "RAG Service Contextualizado") {
-    Component(query_processor, "Query Processor", "Python + LangChain", "Processa e otimiza queries de entrada")
-    Component(vector_retriever, "Vector Retriever", "Python + Pinecone SDK", "Busca vetorial otimizada no Pinecone")
-    Component(context_ranker, "Context Ranker", "Python + scikit-learn", "Ranking e filtragem de contexto relevante")
-    Component(metadata_enricher, "Metadata Enricher", "Python", "Enriquece resultados com metadados estruturados")
-    Component(context_generator, "Context Generator", "Python + LangChain + Ollama", "Gera respostas contextualizadas")
-    Component(response_cache, "Response Cache", "Python + Redis", "Cache inteligente de respostas RAG")
-    Component(sensor_context_enhancer, "Sensor Context Enhancer", "Python", "Enriquece contexto com dados específicos de sensores")
+    Component(knowledge_indexer, "Knowledge Indexer", "Python + LangChain", "Indexa conhecimento para RAG")
 }
 
 Container_Boundary(ingestion_boundary, "Entrada e Coordenação") {
@@ -71,97 +56,65 @@ Container_Boundary(queue_boundary, "Fila de Eventos - Hub Central") {
 }
 
 Container_Boundary(agents_boundary, "Pipeline de Agentes AI Contextualizados") {
-    Component(anomaly_detector, "Anomaly Detection Agent", "Python + LangChain + scikit-learn", "Detecta anomalias usando contexto de equipamentos E sensores")
-    Component(predictive_analyzer, "Predictive Analysis Agent", "Python + LangChain + TensorFlow", "Prediz falhas usando histórico + contexto técnico")
-    Component(maintenance_planner, "Maintenance Planning Agent", "Python + LangChain", "Planeja manutenções usando RAG completo (equipamentos + sensores)")
-    Component(workorder_generator, "Work Order Agent", "Python + LangChain", "Gera OS usando contexto técnico completo")
+    Component(anomaly_detector, "Anomaly Detection Agent", "Python + LangChain + scikit-learn", "Detecta anomalias usando contexto de equipamentos")
+    Component(predictive_analyzer, "Predictive Analysis Agent", "Python + LangChain + TensorFlow", "Prediz falhas usando histórico de manutenções")
+    Component(maintenance_planner, "Maintenance Planning Agent", "Python + LangChain", "Planeja manutenções usando FMEA e manuais")
+    Component(workorder_generator, "Work Order Agent", "Python + LangChain", "Gera OS usando contexto completo do equipamento")
 }
 
-ContainerDb(postgres, "PostgreSQL", "PostgreSQL 15", "Dados estruturados e metadados")
+Container_Boundary(rag_boundary, "RAG Service Contextualizado") {
+    Component(contextual_retriever, "Contextual Retriever", "Python + LangChain", "Busca conhecimento específico por equipamento")
+    Component(manual_searcher, "Manual Searcher", "Python + LangChain", "Busca procedimentos específicos em manuais")
+    Component(fmea_searcher, "FMEA Searcher", "Python + LangChain", "Busca análises FMEA relacionadas")
+    Component(history_searcher, "History Searcher", "Python + LangChain", "Busca casos similares no histórico")
+    Component(context_generator, "Context Generator", "Python + LangChain + Ollama", "Gera recomendações contextualizadas")
+}
+
+ContainerDb(postgres, "PostgreSQL", "PostgreSQL 15", "Dados mestre e operacionais")
 ContainerDb(influxdb, "InfluxDB/TimescaleDB", "Time Series Database", "Histórico de sensores")
-ContainerDb(pinecone, "Pinecone Vector DB", "Pinecone Cloud", "Embeddings vetorizados para RAG")
-ContainerDb(minio, "MinIO/S3", "Object Storage", "Arquivos originais")
-ContainerDb(redis_cache, "Redis Cache", "Redis Cluster", "Cache de consultas RAG")
+ContainerDb(pinecone, "Pinecone Vector DB", "Pinecone Cloud", "Embeddings contextuais")
+ContainerDb(minio, "MinIO/S3", "Object Storage", "PDFs e documentos técnicos")
 
 Person(gestor_ativos, "Gestor de Ativos", "Cadastra dados mestre")
 System_Ext(sensors, "Sensores IoT", "Dispositivos de campo")
 
-' === FLUXOS DE DADOS ESTRUTURADOS ===
+' === FLUXOS DE GESTÃO DE DADOS MESTRE ===
+' Equipment Management
 Rel(gestor_ativos, equipment_crud, "Cadastra equipamentos", "REST API")
 Rel(equipment_crud, equipment_validator, "Valida dados", "Internal")
 Rel(equipment_validator, hierarchy_manager, "Valida hierarquia", "Internal")
 Rel(equipment_crud, postgres, "Persiste equipamentos", "SQL")
 
+' Sensor Management
 Rel(gestor_ativos, sensor_crud, "Cadastra sensores", "REST API")
 Rel(sensor_crud, sensor_validator, "Valida especificações", "Internal")
 Rel(sensor_validator, sensor_registry, "Registra globalmente", "Internal")
 Rel(sensor_crud, postgres, "Persiste sensores", "SQL")
 
+' Manual & FMEA Management
+Rel(gestor_ativos, manual_crud, "Upload manuais", "REST API")
+Rel(manual_crud, document_uploader, "Upload seguro", "Internal")
+Rel(document_uploader, minio, "Armazena PDFs", "S3 API")
+Rel(manual_crud, fmea_manager, "Vincula FMEA", "Internal")
+Rel(fmea_manager, postgres, "Persiste FMEA", "SQL")
+
+' Document Processing Pipeline
+Rel(document_uploader, pdf_processor, "Process new PDF", "Internal")
+Rel(pdf_processor, text_extractor, "Extracted text", "Internal")
+Rel(text_extractor, entity_recognizer, "Structured text", "Internal")
+Rel(entity_recognizer, document_classifier, "Entities found", "Internal")
+Rel(document_classifier, embedding_generator, "Classified content", "Internal")
+Rel(embedding_generator, knowledge_indexer, "Generate embeddings", "Internal")
+Rel(knowledge_indexer, pinecone, "Store embeddings", "Pinecone API")
+
+' Maintenance History Management
 Rel(gestor_ativos, maintenance_crud, "Registra manutenções", "REST API")
 Rel(maintenance_crud, failure_analyzer, "Analisa padrões", "Internal")
 Rel(failure_analyzer, roi_calculator, "Calcula ROI", "Internal")
 Rel(maintenance_crud, postgres, "Persiste histórico", "SQL")
 
-' === GESTÃO DE DOCUMENTAÇÃO DE SENSORES ===
-Rel(gestor_ativos, sensor_documentation, "Upload sensor manuals", "REST API")
-Rel(sensor_documentation, document_uploader, "Secure upload", "Internal")
-Rel(document_uploader, minio, "Store sensor docs", "S3 API")
-Rel(sensor_documentation, postgres, "Store sensor metadata", "SQL")
-
-' Linking sensor docs with sensor registry
-Rel(sensor_documentation, sensor_registry, "Link docs to sensor types", "Internal")
-Rel(sensor_registry, postgres, "Store documentation links", "SQL")
-
-' === PIPELINE DE VETORIZAÇÃO COMPLETO (EQUIPAMENTOS + SENSORES) ===
-Rel(gestor_ativos, manual_crud, "Upload equipment docs", "REST API")
-Rel(manual_crud, document_uploader, "Upload seguro", "Internal")
-Rel(document_uploader, minio, "Armazena originais", "S3 API")
-Rel(manual_crud, fmea_manager, "Vincula FMEA", "Internal")
-Rel(fmea_manager, postgres, "Persiste FMEA estruturada", "SQL")
-
-' Processamento automático para vetorização - EQUIPAMENTOS
-Rel(document_uploader, document_processor, "Trigger equipment processing", "HTTP")
-Rel(fmea_manager, document_processor, "Process FMEA", "HTTP")
-Rel(maintenance_crud, document_processor, "Process maintenance cases", "HTTP")
-
-' Processamento automático para vetorização - SENSORES
-Rel(sensor_documentation, sensor_data_processor, "Trigger sensor processing", "HTTP")
-Rel(sensor_registry, sensor_data_processor, "Process sensor specifications", "HTTP")
-Rel(sensor_registry, technical_spec_processor, "Process technical specs", "HTTP")
-
-' Pipeline interno de vetorização UNIFICADO
-Rel(document_processor, pdf_processor, "Process equipment PDFs", "Internal")
-Rel(sensor_data_processor, pdf_processor, "Process sensor PDFs", "Internal")
-Rel(technical_spec_processor, text_extractor, "Process structured specs", "Internal")
-
-Rel(pdf_processor, minio, "Read original files", "S3 API")
-Rel(pdf_processor, text_extractor, "Extracted text", "Internal")
-Rel(text_extractor, entity_recognizer, "Structured text", "Internal")
-Rel(entity_recognizer, document_classifier, "Entities found", "Internal")
-Rel(document_classifier, chunk_processor, "Classified content", "Internal")
-Rel(chunk_processor, embedding_generator, "Optimized chunks", "Internal")
-Rel(embedding_generator, vector_indexer, "Generated embeddings", "Internal")
-
-' Indexação no Pinecone com metadados ricos (equipamentos + sensores)
-Rel(vector_indexer, postgres, "Read metadata (equipment + sensor)", "SQL")
-Rel(vector_indexer, pinecone, "Store vectors + rich metadata", "Pinecone API")
-
-' === RAG SERVICE USANDO DADOS VETORIZADOS COMPLETOS ===
-Rel(maintenance_planner, query_processor, "RAG query", "HTTP")
-Rel(anomaly_detector, query_processor, "Sensor-specific RAG query", "HTTP")
-Rel(query_processor, vector_retriever, "Processed query", "Internal")
-Rel(vector_retriever, pinecone, "Vector search (equipment + sensor)", "Pinecone API")
-Rel(vector_retriever, context_ranker, "Raw results", "Internal")
-Rel(context_ranker, metadata_enricher, "Ranked contexts", "Internal")
-Rel(context_ranker, sensor_context_enhancer, "Sensor-specific ranking", "Internal")
-Rel(metadata_enricher, postgres, "Enrich with metadata", "SQL")
-Rel(sensor_context_enhancer, sensor_registry, "Sensor technical context", "REST API")
-Rel(metadata_enricher, context_generator, "Enriched context", "Internal")
-Rel(sensor_context_enhancer, context_generator, "Sensor-enhanced context", "Internal")
-Rel(context_generator, response_cache, "Cache response", "Internal")
-Rel(response_cache, redis_cache, "Store cache", "Redis")
-
 ' === FLUXO OPERACIONAL COM CONTEXTO ===
+' Data Ingestion with Context
 Rel(sensors, data_receiver, "Telemetria", "MQTT/HTTP")
 Rel(data_receiver, sensor_validator_runtime, "Valida sensor", "Internal")
 Rel(sensor_validator_runtime, sensor_registry, "Consulta registry", "Internal")
@@ -169,131 +122,30 @@ Rel(data_receiver, data_processor, "Data + context", "Internal")
 Rel(data_processor, timeseries_writer, "Processed data", "Internal")
 Rel(timeseries_writer, influxdb, "Store time series", "InfluxDB")
 
-' === AGENTES AI COM RAG VETORIZADO COMPLETO ===
+' Pipeline com Contexto Completo
 Rel(sensor_queue, anomaly_detector, "Sensor data", "AMQP")
 Rel(anomaly_detector, equipment_crud, "Equipment context", "REST API")
-Rel(anomaly_detector, sensor_registry, "Sensor specs + docs", "REST API")
+Rel(anomaly_detector, sensor_registry, "Sensor specs", "REST API")
 Rel(anomaly_detector, maintenance_crud, "Historical context", "REST API")
-' RAG query para anomaly detector já mapeado acima
 
 Rel(trigger_queue, predictive_analyzer, "Trigger event", "AMQP")
 Rel(predictive_analyzer, maintenance_crud, "Historical failures", "REST API")
 Rel(predictive_analyzer, equipment_crud, "Equipment specs", "REST API")
-Rel(predictive_analyzer, sensor_registry, "Sensor technical specs", "REST API")
 Rel(predictive_analyzer, failure_analyzer, "Failure patterns", "REST API")
 
 Rel(prediction_queue, maintenance_planner, "Prediction event", "AMQP")
-' RAG flow já detalhado acima
+Rel(maintenance_planner, contextual_retriever, "Query knowledge", "HTTP")
+Rel(contextual_retriever, manual_searcher, "Search manuals", "Internal")
+Rel(contextual_retriever, fmea_searcher, "Search FMEA", "Internal")
+Rel(contextual_retriever, history_searcher, "Search similar cases", "Internal")
+Rel(manual_searcher, pinecone, "Vector search manuals", "Pinecone API")
+Rel(fmea_searcher, pinecone, "Vector search FMEA", "Pinecone API")
+Rel(history_searcher, postgres, "Search history", "SQL")
 
 Rel(maintenance_queue, workorder_generator, "Maintenance event", "AMQP")
 Rel(workorder_generator, equipment_crud, "Equipment hierarchy", "REST API")
-Rel(workorder_generator, sensor_registry, "Sensor requirements", "REST API")
 Rel(workorder_generator, maintenance_crud, "Log new maintenance", "REST API")
 Rel(workorder_generator, roi_calculator, "Calculate expected ROI", "REST API")
-
-note right of pinecone
-Pinecone Vector Database - Conteúdo RAG COMPLETO:
-
-📚 EQUIPAMENTOS:
-- Manuais de equipamentos
-- Procedimentos de manutenção
-- Troubleshooting guides
-- Especificações técnicas
-- Safety procedures
-
-🔍 SENSORES:
-- Manuais técnicos de sensores
-- Parâmetros de configuração
-- Calibration procedures
-- Troubleshooting sensor-específico
-- Limites operacionais e alarmes
-- Installation guides
-- Compatibility matrices
-
-⚠️ ANÁLISES FMEA:
-- Modos de falha (equipamentos + sensores)
-- Efeitos e severidades
-- Ações recomendadas
-- Correlações entre componentes
-
-🔧 CASOS HISTÓRICOS:
-- Maintenance cases completos
-- Sensor failures e soluções
-- Patterns de falha recorrentes
-- Lessons learned
-
-🧠 KNOWLEDGE BASE:
-- Best practices por tipo de sensor
-- Manufacturer recommendations
-- Industry standards
-- Regulatory compliance
-end note
-
-note right of sensor_context_enhancer
-Sensor Context Enhancement:
-
-🔍 CONTEXTO ESPECÍFICO:
-- Enriquece RAG com dados técnicos do sensor
-- Correlaciona com equipment hierarchy
-- Adiciona historical performance data
-- Inclui calibration status
-
-📊 TECHNICAL AUGMENTATION:
-- Operating ranges e specifications
-- Manufacturer-specific guidance
-- Installation requirements
-- Maintenance schedules
-
-⚡ PERFORMANCE OPTIMIZATION:
-- Cache sensor-specific contexts
-- Pre-computed sensor correlations
-- Fast lookup para sensor families
-- Context relevance scoring
-end note
-
-note right of vector_indexer
-Vector Indexer - Metadados Completos:
-
-🏷️ EQUIPMENT METADATA:
-- equipment_id, component_type
-- failure_mode, severity_level
-- document_type, version
-
-🔍 SENSOR METADATA:
-- sensor_type_id, measurement_type
-- manufacturer, model
-- installation_context
-- calibration_requirements
-- operational_limits
-
-📊 UNIFIED INDEXING:
-- Cross-referencing equipment ↔ sensor
-- Multi-dimensional search
-- Namespace isolation por tenant
-- Contextual boosting por relevância
-end note
-
-note right of sensor_data_processor
-Sensor Data Processing for RAG:
-
-📋 STRUCTURED DATA → VECTORS:
-- Sensor specifications
-- Configuration parameters
-- Operational limits
-- Calibration procedures
-
-📚 DOCUMENTS → VECTORS:
-- Installation manuals
-- Troubleshooting guides
-- Manufacturer datasheets
-- Best practice documents
-
-🔗 RELATIONSHIP MAPPING:
-- Sensor ↔ Equipment correlations
-- Compatibility matrices
-- Cross-references entre docs
-- Historical performance links
-end note
 
 SHOW_LEGEND()
 @enduml
