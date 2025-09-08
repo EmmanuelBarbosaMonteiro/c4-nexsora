@@ -4,9 +4,8 @@
 title Diagrama de Componentes - Gestão Completa de Dados Mestre + Pipeline AI
 
 Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
-    Component(equipment_crud, "Equipment CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia hierarquia de equipamentos e especificações")
+    Component(equipment_crud, "Equipment CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia equipamentos e especificações")
     Component(equipment_validator, "Equipment Validator", "Python", "Valida dados e regras de negócio de equipamentos")
-    Component(hierarchy_manager, "Hierarchy Manager", "Python", "Gerencia árvore hierárquica (Planta → Linha → Equipamento)")
     
     Component(sensor_crud, "Sensor CRUD", "Python + FastAPI + SQLAlchemy", "Gerencia tipos de sensores e especificações")
     Component(sensor_registry, "Sensor Registry", "Python", "Registro global de sensores para reutilização")
@@ -18,7 +17,6 @@ Container_Boundary(data_management_boundary, "Gestão de Dados Mestre") {
     
     Component(maintenance_crud, "Maintenance History CRUD", "Python + FastAPI", "Registra histórico completo de manutenções")
     Component(failure_analyzer, "Failure Pattern Analyzer", "Python + pandas", "Analisa padrões de falha e correlações")
-    Component(roi_calculator, "ROI Calculator", "Python", "Calcula ROI de manutenções e predições")
 }
 
 Container_Boundary(document_processing_boundary, "Processamento Inteligente de Documentos") {
@@ -82,7 +80,6 @@ System_Ext(sensors, "Sensores IoT", "Dispositivos de campo")
 ' Equipment Management
 Rel(gestor_ativos, equipment_crud, "Cadastra equipamentos", "REST API")
 Rel(equipment_crud, equipment_validator, "Valida dados", "Internal")
-Rel(equipment_validator, hierarchy_manager, "Valida hierarquia", "Internal")
 Rel(equipment_crud, postgres, "Persiste equipamentos", "SQL")
 
 ' Sensor Management
@@ -110,7 +107,6 @@ Rel(knowledge_indexer, pinecone, "Store embeddings", "Pinecone API")
 ' Maintenance History Management
 Rel(gestor_ativos, maintenance_crud, "Registra manutenções", "REST API")
 Rel(maintenance_crud, failure_analyzer, "Analisa padrões", "Internal")
-Rel(failure_analyzer, roi_calculator, "Calcula ROI", "Internal")
 Rel(maintenance_crud, postgres, "Persiste histórico", "SQL")
 
 ' === FLUXO OPERACIONAL COM CONTEXTO ===
@@ -145,7 +141,6 @@ Rel(history_searcher, postgres, "Search history", "SQL")
 Rel(maintenance_queue, workorder_generator, "Maintenance event", "AMQP")
 Rel(workorder_generator, equipment_crud, "Equipment hierarchy", "REST API")
 Rel(workorder_generator, maintenance_crud, "Log new maintenance", "REST API")
-Rel(workorder_generator, roi_calculator, "Calculate expected ROI", "REST API")
 
 SHOW_LEGEND()
 @enduml
