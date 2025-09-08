@@ -13,7 +13,7 @@ Transformar dados de sensores IoT em insights acionáveis de manutenção atrav�
 - **Detecção Proativa**: Identificar anomalias em tempo real usando modelos de LLM
 - **Predição Inteligente**: Prever falhas futuras com alta precisão usando análise de séries temporais
 - **Planejamento Otimizado**: Gerar planos de manutenção contextualizados usando RAG (Retrieval-Augmented Generation)
-- **Integração Seamless**: Conectar com ERPs e sistemas corporativos existentes sem vendor lock-in
+- **Integração**: Conectar com ERPs e sistemas corporativos existentes sem vendor lock-in
 - **Controle de Custos**: Oferece triggers configuráveis para otimizar uso de LLMs e controlar custos SaaS
 
 ## 🏗️ Arquitetura

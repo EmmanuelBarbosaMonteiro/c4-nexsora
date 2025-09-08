@@ -1,7 +1,7 @@
 @startuml C2-Containers-Nexora
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-title Diagrama de Containers - Plataforma SaaS Nexora com Gestão de Dados Mestre
+title Diagrama de Containers - Plataforma SaaS Nexora com Dados Vetorizados para RAG
 
 Person(usuario, "Usuário", "Técnicos de manutenção, gestores de ativos e operadores")
 Person(admin, "Admin/Configurador", "Configura triggers de análise preditiva")
@@ -11,229 +11,198 @@ System_Boundary(nexora_boundary, "Plataforma SaaS Nexora") {
     Container(web_app, "Aplicação Web", "React + TypeScript", "Interface de usuário para monitoramento, dashboards e configuração de triggers")
     Container(api_gateway, "API Gateway", "Kong/Nginx", "Ponto de entrada unificado, autenticação e roteamento de requisições")
     
-    ' === NOVOS COMPONENTES DE GESTÃO DE DADOS ===
+    ' === GESTÃO DE DADOS MESTRE ===
     Container(equipment_service, "Equipment Management Service", "Python + FastAPI", "CRUD de equipamentos, hierarquia e classificação")
     Container(sensor_service, "Sensor Management Service", "Python + FastAPI", "CRUD de sensores, tipos e especificações")
     Container(manual_service, "Manual & Documentation Service", "Python + FastAPI", "CRUD de manuais, procedimentos e FMEA")
     Container(maintenance_history_service, "Maintenance History Service", "Python + FastAPI", "Histórico completo de manutenções e falhas")
-    Container(document_processor, "Document Processor", "Python + LangChain", "Processa PDFs, extrai texto e gera embeddings")
     
+    ' === PROCESSAMENTO PARA RAG ===
+    Container(document_processor, "Document Processor", "Python + LangChain", "Processa documentos e gera embeddings para RAG")
+    Container(vector_indexer, "Vector Indexer", "Python + LangChain", "Indexa e gerencia embeddings no banco vetorizado")
+    
+    ' === PIPELINE OPERACIONAL ===
     Container(data_ingestion, "Entrada no Sistema", "Python/FastAPI", "Recebe e processa dados de sensores IoT")
     Container(observer, "Observador", "Python", "Observa mudanças e emite eventos para coordenação")
     Container(event_queue, "Fila de Eventos", "RabbitMQ", "Hub central de coordenação entre agentes AI")
     
     Container(trigger_manager, "Trigger Manager", "Python + Celery", "Gerencia triggers configuráveis para análise preditiva")
     
+    ' === AGENTES AI ===
     Container(anomaly_agent, "Agent Detecção Anomalias", "Python + LangChain", "Detecta padrões anômalos em dados de sensores")
     Container(predictive_agent, "Agent Análise Preditiva", "Python + LangChain", "Prediz falhas (acionado sob demanda via triggers)")
     Container(maintenance_agent, "Agent Necessidades Manutenção", "Python + LangChain", "Identifica necessidades de manutenção")
     Container(workorder_agent, "Agent Emissão OS", "Python + LangChain", "Gera ordens de serviço priorizadas")
     
-    Container(rag_service, "RAG Service", "Python + LangChain", "Retrieval-Augmented Generation para recomendações inteligentes")
+    ' === RAG E TOOLS ===
+    Container(rag_service, "RAG Service", "Python + LangChain", "Retrieval-Augmented Generation usando dados vetorizados")
     Container(internal_tools, "Tools Internas", "Python", "Ferramentas que não acessam sistemas externos")
     Container(docker_mcp_gateway, "Docker MCP Gateway", "Docker MCP Server", "Controla ferramentas que acessam sistemas externos")
     
     Container(monitoring, "Observabilidade", "Prometheus/Grafana/Jaeger", "Coleta de métricas, logs e traces distribuídos")
 }
 
-ContainerDb(postgres, "Banco Principal", "PostgreSQL", "Dados operacionais, equipamentos, sensores, manuais e configurações")
-ContainerDb(timeseries_db, "Banco Time Series", "InfluxDB/TimescaleDB", "Armazena histórico de dados de sensores para análise preditiva")
-ContainerDb(vector_db, "Vector Database", "Pinecone", "Embeddings de manuais, FMEA e dados históricos para IA")
-ContainerDb(cache, "Cache", "Redis", "Cache de sessões e dados frequentemente acessados")
-ContainerDb(file_storage, "File Storage", "MinIO/S3", "Armazenamento de PDFs, imagens e documentos técnicos")
+' === BANCOS DE DADOS SEPARADOS POR TIPO ===
+ContainerDb(postgres, "PostgreSQL", "PostgreSQL 15", "Dados estruturados: equipamentos, sensores, configurações, histórico de manutenções")
+ContainerDb(timeseries_db, "InfluxDB/TimescaleDB", "Time Series Database", "Dados temporais: histórico de sensores IoT")
+ContainerDb(vector_db, "Pinecone Vector DB", "Pinecone Cloud", "Dados vetorizados: embeddings de manuais, FMEA, procedimentos, casos históricos")
+ContainerDb(file_storage, "MinIO/S3", "Object Storage", "Arquivos originais: PDFs, imagens, documentos técnicos")
+ContainerDb(cache, "Redis", "Redis Cluster", "Cache de sessões e consultas frequentes")
 
 System_Ext(sensores, "Sensores IoT", "Dispositivos de monitoramento")
 System_Ext(erp, "Sistemas ERP", "SAP, Oracle, outros ERPs")
 System_Ext(notificacoes, "Serviços de Notificação", "WhatsApp, Email, SMS")
 
 ' === FLUXOS DE GESTÃO DE DADOS MESTRE ===
-Rel(gestor_ativos, web_app, "Cadastra equipamentos e sensores", "HTTPS")
+Rel(gestor_ativos, web_app, "Cadastra dados mestre", "HTTPS")
 Rel(web_app, api_gateway, "CRUD operations", "HTTPS")
 Rel(api_gateway, equipment_service, "Equipment CRUD", "HTTP")
 Rel(api_gateway, sensor_service, "Sensor CRUD", "HTTP")
 Rel(api_gateway, manual_service, "Manual CRUD", "HTTP")
 Rel(api_gateway, maintenance_history_service, "History CRUD", "HTTP")
 
-' Persistência dos dados mestre
+' === PERSISTÊNCIA DE DADOS ESTRUTURADOS ===
 Rel(equipment_service, postgres, "Equipment data", "SQL")
 Rel(sensor_service, postgres, "Sensor data", "SQL")
 Rel(manual_service, postgres, "Manual metadata", "SQL")
-Rel(manual_service, file_storage, "PDF/Documents", "S3 API")
 Rel(maintenance_history_service, postgres, "History data", "SQL")
 
-' Processamento de documentos para RAG
+' === ARMAZENAMENTO DE ARQUIVOS ===
+Rel(manual_service, file_storage, "Store PDFs/Documents", "S3 API")
+
+' === PROCESSAMENTO PARA VETORIZAÇÃO ===
 Rel(manual_service, document_processor, "Process new documents", "HTTP")
-Rel(document_processor, file_storage, "Read PDFs", "S3 API")
-Rel(document_processor, rag_service, "Extract and index", "HTTP")
-Rel(rag_service, vector_db, "Store embeddings", "Pinecone API")
+Rel(maintenance_history_service, document_processor, "Process maintenance cases", "HTTP")
+Rel(document_processor, file_storage, "Read original files", "S3 API")
+Rel(document_processor, postgres, "Read metadata", "SQL")
+Rel(document_processor, vector_indexer, "Send processed content", "HTTP")
+Rel(vector_indexer, vector_db, "Store embeddings", "Pinecone API")
 
-' Fluxo de Configuração de Triggers
-Rel(admin, web_app, "Configura triggers de análise", "HTTPS")
-Rel(web_app, api_gateway, "API de configuração", "HTTPS")
-Rel(api_gateway, trigger_manager, "Salva configurações", "HTTP")
-Rel(trigger_manager, postgres, "Armazena triggers", "SQL")
-
-' Fluxo Pipeline Sequencial
+' === FLUXO OPERACIONAL ===
 Rel(sensores, data_ingestion, "Envia telemetria", "MQTT/HTTP")
 Rel(data_ingestion, sensor_service, "Valida sensor registration", "HTTP")
-Rel(data_ingestion, timeseries_db, "Armazena dados tratados", "SQL/Line Protocol")
+Rel(data_ingestion, timeseries_db, "Store sensor data", "InfluxDB Protocol")
 Rel(data_ingestion, observer, "Dados processados", "HTTP")
 Rel(observer, event_queue, "Emite eventos", "AMQP")
 
-' Trigger Logic
-Rel(event_queue, trigger_manager, "Monitora dados para triggers", "AMQP")
-Rel(trigger_manager, postgres, "Consulta configurações", "SQL")
-Rel(trigger_manager, timeseries_db, "Avalia thresholds", "SQL/InfluxQL")
-Rel(trigger_manager, event_queue, "Dispara análise preditiva", "AMQP")
+' === TRIGGER LOGIC ===
+Rel(admin, web_app, "Configura triggers", "HTTPS")
+Rel(api_gateway, trigger_manager, "Trigger config", "HTTP")
+Rel(trigger_manager, postgres, "Store trigger config", "SQL")
+Rel(event_queue, trigger_manager, "Monitor data", "AMQP")
+Rel(trigger_manager, timeseries_db, "Evaluate thresholds", "InfluxQL")
+Rel(trigger_manager, event_queue, "Trigger predictive analysis", "AMQP")
 
-' Pipeline de Agentes com acesso aos dados mestre
-Rel(event_queue, anomaly_agent, "Evento: sensor_data", "AMQP")
-Rel(anomaly_agent, timeseries_db, "Consulta histórico", "SQL/InfluxQL")
-Rel(anomaly_agent, equipment_service, "Equipment specs", "HTTP")
+' === PIPELINE DE AGENTES COM DADOS CONTEXTUALIZADOS ===
+Rel(event_queue, anomaly_agent, "Sensor data events", "AMQP")
+Rel(anomaly_agent, timeseries_db, "Query historical data", "InfluxQL")
+Rel(anomaly_agent, equipment_service, "Equipment context", "HTTP")
 Rel(anomaly_agent, sensor_service, "Sensor specs", "HTTP")
-Rel(anomaly_agent, event_queue, "Evento: anomaly_detected (se crítica)", "AMQP")
 
-Rel(event_queue, predictive_agent, "Evento: trigger_analysis", "AMQP")
-Rel(predictive_agent, timeseries_db, "Consulta séries temporais", "SQL/InfluxQL")
-Rel(predictive_agent, maintenance_history_service, "Historical failures", "HTTP")
-Rel(predictive_agent, equipment_service, "Equipment context", "HTTP")
-Rel(predictive_agent, event_queue, "Evento: failure_predicted", "AMQP")
+Rel(event_queue, predictive_agent, "Trigger events", "AMQP")
+Rel(predictive_agent, timeseries_db, "Time series analysis", "InfluxQL")
+Rel(predictive_agent, maintenance_history_service, "Historical patterns", "HTTP")
+Rel(predictive_agent, equipment_service, "Equipment specs", "HTTP")
 
-Rel(event_queue, maintenance_agent, "Evento: failure_predicted", "AMQP")
-Rel(maintenance_agent, rag_service, "Consulta conhecimento", "HTTP")
+Rel(event_queue, maintenance_agent, "Prediction events", "AMQP")
+Rel(maintenance_agent, rag_service, "Query knowledge base", "HTTP")
 Rel(maintenance_agent, equipment_service, "Equipment details", "HTTP")
 Rel(maintenance_agent, maintenance_history_service, "Similar cases", "HTTP")
-Rel(maintenance_agent, event_queue, "Evento: maintenance_needed", "AMQP")
 
-Rel(event_queue, workorder_agent, "Evento: maintenance_needed", "AMQP")
+Rel(event_queue, workorder_agent, "Maintenance events", "AMQP")
 Rel(workorder_agent, equipment_service, "Equipment hierarchy", "HTTP")
 Rel(workorder_agent, maintenance_history_service, "Log maintenance", "HTTP")
 
-' RAG e Tools
-Rel(maintenance_agent, rag_service, "Consulta conhecimento", "HTTP")
-Rel(rag_service, vector_db, "Busca similaridade", "Pinecone API")
-Rel(workorder_agent, internal_tools, "Usa tools internas", "HTTP")
-Rel(workorder_agent, docker_mcp_gateway, "Usa tools externas", "MCP Protocol")
+' === RAG SERVICE COM DADOS VETORIZADOS ===
+Rel(rag_service, vector_db, "Vector similarity search", "Pinecone API")
+Rel(rag_service, postgres, "Metadata enrichment", "SQL")
+Rel(rag_service, cache, "Cache frequent queries", "Redis")
 
-' MCP Gateway - apenas sistemas externos
-Rel(docker_mcp_gateway, erp, "Integração ERP segura", "REST/SOAP")
-Rel(docker_mcp_gateway, notificacoes, "Notificações seguras", "REST API")
+' === AGENTES AI ACESSANDO RAG ===
+Rel(anomaly_agent, rag_service, "Query sensor knowledge", "HTTP")
+Rel(predictive_agent, rag_service, "Query maintenance patterns", "HTTP")
 
-' Acesso direto para sistemas internos
-Rel(maintenance_agent, postgres, "Consulta equipamentos", "SQL")
-Rel(workorder_agent, postgres, "Cria ordens de serviço", "SQL")
+' === TOOLS E INTEGRAÇÕES ===
+Rel(workorder_agent, internal_tools, "Internal tools", "HTTP")
+Rel(workorder_agent, docker_mcp_gateway, "External tools", "MCP Protocol")
+Rel(docker_mcp_gateway, erp, "ERP integration", "REST/SOAP")
+Rel(docker_mcp_gateway, notificacoes, "Notifications", "REST API")
 
-' Interface usuário
-Rel(usuario, web_app, "Acessa dashboards", "HTTPS")
-Rel(web_app, api_gateway, "Requisições API", "HTTPS")
-Rel(api_gateway, postgres, "Consulta dados", "SQL")
-Rel(api_gateway, timeseries_db, "Consulta métricas", "SQL/InfluxQL")
-Rel(api_gateway, cache, "Cache dados", "Redis Protocol")
+' === INTERFACE USUÁRIO ===
+Rel(usuario, web_app, "Access dashboards", "HTTPS")
+Rel(api_gateway, postgres, "Query operational data", "SQL")
+Rel(api_gateway, timeseries_db, "Query metrics", "InfluxQL")
+Rel(api_gateway, cache, "Cache responses", "Redis")
 
-' Monitoramento e Custos
-Rel(monitoring, event_queue, "Monitora eventos", "HTTP")
-Rel(monitoring, timeseries_db, "Coleta métricas", "InfluxQL")
-Rel(monitoring, trigger_manager, "Monitora custos e usage", "HTTP")
-Rel(predictive_agent, postgres, "Log de custos LLM", "SQL")
+' === MONITORAMENTO ===
+Rel(monitoring, event_queue, "Monitor events", "HTTP")
+Rel(monitoring, timeseries_db, "Collect metrics", "InfluxQL")
+Rel(monitoring, vector_db, "Monitor vector operations", "HTTP")
 
-note as trigger_options
-Opções de Trigger Configuráveis:
+note as data_separation_note
+Separação Clara de Dados por Tipo:
 
-🕐 ANÁLISE AGENDADA:
-- Intervalo fixo (6h, 12h, diário, semanal)
-- Horários específicos (8h, 14h, 20h)
-- Dias da semana personalizados
-- Fuso horário configurável
-- Budget limits por período
+📊 POSTGRESQL (Dados Estruturados):
+- Equipamentos e hierarquia
+- Sensores e especificações  
+- Metadados de manuais e documentos
+- Configurações de triggers
+- Histórico de manutenções estruturado
 
-📊 BASEADA EM INDICADORES:
-- Thresholds por sensor (temp > 80°C)
-- Variações percentuais (+15% da média)
-- Combinações lógicas (temp AND vibração)
-- Desvio padrão configurável (2σ, 3σ)
-- Cooldown period (evita spam)
-- Anomalias críticas (bypass sempre)
+⏱️ INFLUXDB (Dados Temporais):
+- Telemetria de sensores IoT
+- Séries temporais para análise
+- Métricas de performance
+- Dados agregados para ML
+
+🧠 PINECONE (Dados Vetorizados):
+- Embeddings de manuais técnicos
+- Procedimentos de manutenção
+- Análises FMEA vetorizadas
+- Casos históricos de manutenção
+- Knowledge base para RAG
+
+💾 MINIO/S3 (Arquivos Originais):
+- PDFs de manuais
+- Imagens técnicas
+- Documentos de FMEA
+- Backup de arquivos processados
 end note
 
-note as cost_control
-Controle de Custos SaaS:
-- Usage tracking por tenant
-- Budget limits configuráveis
-- Rate limiting baseado em plano
-- Análise sob demanda reduz custos
-- Cost allocation transparente
-- Alertas de budget próximo do limite
+note as vector_processing_note
+Processamento para Vetorização:
+
+🔄 PIPELINE AUTOMÁTICO:
+- Upload de documento → MinIO/S3
+- Metadata → PostgreSQL
+- Processamento → Document Processor
+- OCR + NLP → Extração de conteúdo
+- Embedding → SentenceTransformers
+- Indexação → Pinecone Vector DB
+
+🎯 TIPOS DE CONTEÚDO VETORIZADO:
+- Manuais de equipamentos
+- Procedimentos de manutenção
+- Análises FMEA completas
+- Casos históricos de falhas
+- Recomendações de especialistas
+- Troubleshooting guides
 end note
 
-note as scalability_note
-Escalabilidade e Performance:
-- Agent Preditiva roda apenas quando necessário
-- Trigger Manager distribui carga inteligentemente
-- Cache de resultados de análise
-- Batch processing para múltiplos equipamentos
-- Queue priority para análises críticas
-- Multi-tenant isolation
-end note
+note as rag_optimization_note
+RAG Otimizado com Dados Vetorizados:
 
-note as data_master_note
-Gestão de Dados Mestre:
+🔍 BUSCA CONTEXTUAL:
+- Similarity search por equipamento
+- Filtragem por tipo de falha
+- Ranking por relevância histórica
+- Multi-modal search (texto + metadata)
 
-📋 EQUIPAMENTOS:
-- Hierarquia (Planta → Linha → Equipamento)
-- Especificações técnicas
-- Criticidade e classificação
-- Relacionamento com sensores
-- Planos de manutenção padrão
-
-🔍 SENSORES:
-- Tipos e especificações
-- Limites operacionais normais
-- Configurações de alarme
-- Histórico de instalação
-- Reutilização entre equipamentos
-
-📚 MANUAIS & FMEA:
-- PDFs processados automaticamente
-- Embeddings para RAG
-- Procedimentos por tipo de falha
-- FMEA (Failure Mode Effect Analysis)
-- Knowledge base contextualizada
-end note
-
-note as maintenance_history_note
-Histórico de Manutenções:
-
-🔧 REGISTROS COMPLETOS:
-- Tipos de manutenção (preventiva, corretiva, preditiva)
-- Peças utilizadas e custos
-- Tempo de execução (MTTR)
-- Eficácia das predições
-- Feedback dos técnicos
-
-📊 ANÁLISE DE PADRÕES:
-- Modos de falha recorrentes
-- Sazonalidade de problemas
-- Correlações entre equipamentos
-- ROI das manutenções
-- Trending de degradação
-end note
-
-note as document_processing_note
-Processamento de Documentos:
-
-🤖 AUTOMAÇÃO COMPLETA:
-- OCR para PDFs escaneados
-- Extração de procedimentos
-- Identificação de peças/ferramentas
-- Linking com equipamentos
-- Versionamento de manuais
-
-🧠 RAG INTELIGENTE:
-- Embeddings contextuais por equipamento
-- Busca semântica avançada
-- Recomendações personalizadas
-- Atualização automática da knowledge base
-- Multi-idioma (PT/EN/ES)
+⚡ PERFORMANCE:
+- Cache de embeddings frequentes
+- Índices otimizados no Pinecone
+- Queries paralelas para múltiplas fontes
+- Response time < 2s para consultas RAG
 end note
 
 SHOW_LEGEND()
